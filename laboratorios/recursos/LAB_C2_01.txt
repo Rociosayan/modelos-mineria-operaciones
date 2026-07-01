@@ -1,0 +1,270 @@
+LABORATORIO CALIFICADO N° 2
+Semana 3 y 4: SQL y Normalización Básica
+Trabajo grupal
+DOCENTE: Pilar Rocío Sayán Mejía
+CURSO: Fundamentos de Gestión de Datos
+Número de grupo
+Sección
+Fecha
+Integrante
+Rol
+Sección
+I. Objetivo del Laboratorio
+Interpretar consultas SQL básicas y reconocer un modelo normalizado simple, usando un caso pequeño de ventas de minimarket.
+II. Elemento de la Capacidad Terminal de la Semana
+Interpreta consultas con SELECT, JOIN y GROUP BY, relacionándolas con tablas, claves y normalización básica.
+III. Seguridad
+- El laboratorio es grupal.
+- No modificar el código entregado.
+- Responder interpretando la salida de cada consulta.
+- Cada integrante coloca en el foro de la semana únicamente el enlace del notebook trabajado por el grupo.
+IV. Fundamento Teórico
+Completen la tabla con respuestas breves antes de interpretar las consultas.
+N°
+Concepto
+Definición breve
+1
+Tabla
+Conjunto de datos organizado en filas y columnas.
+2
+Clave primaria
+Campo que identifica de forma única cada fila.
+3
+Clave foránea
+Campo que conecta una tabla con otra.
+4
+INNER JOIN
+Une filas que tienen coincidencia en ambas tablas.
+5
+LEFT JOIN
+Muestra todos los registros de la tabla izquierda y los datos coincidentes de la derecha.
+6
+GROUP BY
+Agrupa filas para calcular totales o conteos.
+7
+Normalización
+Organiza los datos para reducir repetición y mejorar el orden.
+V. Normas Empleadas
+No aplica norma técnica específica para este laboratorio.
+VI. Recursos
+- Google Colab con cuenta Google activa.
+- SQLite mediante el módulo sqlite3.
+- Pandas para visualizar resultados.
+- Material de Semana 3 y Semana 4.
+Metodología para el desarrollo de la tarea
+- Duración estimada: 1 hora y 40 minutos.
+- El trabajo se resuelve en grupo.
+- El notebook debe contener código ejecutado y respuestas en Markdown, sin rúbrica.
+- Cada integrante debe figurar con su rol, grupo y sección.
+VII. Procedimiento
+Caso de Negocio: MiniMarket C2
+MiniMarket C2 vende productos de abarrotes, bebidas y limpieza. El equipo debe interpretar consultas sencillas para responder qué se vendió, a quién se vendió y cómo se organizan los datos en tablas relacionadas.
+Actividad 1: Crear la base del caso
+Ejecuten el código sin modificarlo. Luego identifiquen qué tablas se crean.
+# Código 1: crear una base pequeña para el laboratorio calificado
+import sqlite3
+import pandas as pd
+conn = sqlite3.connect("minimarket_c2.db")
+cursor = conn.cursor()
+def query_sql(sql):
+return pd.read_sql_query(sql, conn)
+cursor.executescript('''
+DROP TABLE IF EXISTS ventas;
+DROP TABLE IF EXISTS productos;
+DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS clientes;
+CREATE TABLE categorias (
+id_categoria INTEGER PRIMARY KEY,
+nombre TEXT NOT NULL
+);
+CREATE TABLE productos (
+id_producto INTEGER PRIMARY KEY,
+nombre TEXT NOT NULL,
+id_categoria INTEGER NOT NULL,
+precio REAL NOT NULL,
+FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria)
+);
+CREATE TABLE clientes (
+id_cliente INTEGER PRIMARY KEY,
+nombre TEXT NOT NULL,
+distrito TEXT NOT NULL
+);
+CREATE TABLE ventas (
+id_venta INTEGER PRIMARY KEY,
+fecha TEXT NOT NULL,
+id_cliente INTEGER NOT NULL,
+id_producto INTEGER NOT NULL,
+cantidad INTEGER NOT NULL,
+FOREIGN KEY (id_cliente) REFERENCES clientes(id_cliente),
+FOREIGN KEY (id_producto) REFERENCES productos(id_producto)
+);
+''')
+cursor.executescript('''
+INSERT INTO categorias VALUES
+(1, 'Abarrotes'),
+(2, 'Bebidas'),
+(3, 'Limpieza');
+INSERT INTO productos VALUES
+(1, 'Arroz 5kg', 1, 28.50),
+(2, 'Aceite 1L', 1, 12.80),
+(3, 'Gaseosa 3L', 2, 9.90),
+(4, 'Detergente 1kg', 3, 16.50),
+(5, 'Agua 2L', 2, 3.50);
+INSERT INTO clientes VALUES
+(1, 'Ana Torres', 'Los Olivos'),
+(2, 'Luis Ramos', 'Comas'),
+(3, 'María Pérez', 'Independencia'),
+(4, 'Carlos Ríos', 'San Martín');
+INSERT INTO ventas VALUES
+(1, '2026-04-01', 1, 1, 2),
+(2, '2026-04-01', 2, 3, 5),
+(3, '2026-04-02', 1, 2, 3),
+(4, '2026-04-02', 3, 4, 1),
+(5, '2026-04-03', 2, 1, 1),
+(6, '2026-04-03', 1, 5, 6);
+''')
+conn.commit()
+print("Base minimarket_c2.db creada correctamente")
+Pregunta 1: ¿Qué tablas se crearon en la base minimarket_c2.db?
+Respuesta:
+Pregunta 2: ¿Qué tablas tienen relación directa con ventas?
+Respuesta:
+Actividad 2: SELECT simple
+Revisen la lista de productos y precios.
+# Código 2: ver productos y precios
+query_sql('''
+SELECT
+id_producto,
+nombre,
+id_categoria,
+precio
+FROM productos
+ORDER BY precio DESC;
+''')
+Pregunta 3: ¿Cuál es el producto con mayor precio? ¿Cuál es el producto con menor precio?
+Respuesta:
+Actividad 3: INNER JOIN
+Interpreten cómo se une ventas con clientes y productos.
+# Código 3: unir ventas con clientes y productos
+query_sql('''
+SELECT
+v.id_venta,
+v.fecha,
+c.nombre AS cliente,
+p.nombre AS producto,
+v.cantidad,
+p.precio,
+v.cantidad * p.precio AS total_venta
+FROM ventas v
+INNER JOIN clientes c ON v.id_cliente = c.id_cliente
+INNER JOIN productos p ON v.id_producto = p.id_producto
+ORDER BY v.id_venta;
+''')
+Pregunta 4: ¿Qué información adicional aparece gracias al INNER JOIN?
+Respuesta:
+Pregunta 5: ¿Qué venta tiene mayor total_venta según la salida?
+Respuesta:
+Actividad 4: GROUP BY
+Observen el total vendido por categoría.
+# Código 4: calcular ventas por categoría
+query_sql('''
+SELECT
+cat.nombre AS categoria,
+SUM(v.cantidad * p.precio) AS total_categoria
+FROM ventas v
+INNER JOIN productos p ON v.id_producto = p.id_producto
+INNER JOIN categorias cat ON p.id_categoria = cat.id_categoria
+GROUP BY cat.nombre
+ORDER BY total_categoria DESC;
+''')
+Pregunta 6: ¿Qué categoría tiene mayor total de venta?
+Respuesta:
+Actividad 5: LEFT JOIN
+Revisen clientes con ventas y clientes sin ventas.
+# Código 5: revisar clientes con y sin ventas
+query_sql('''
+SELECT
+c.nombre AS cliente,
+COUNT(v.id_venta) AS cantidad_ventas
+FROM clientes c
+LEFT JOIN ventas v ON c.id_cliente = v.id_cliente
+GROUP BY c.nombre
+ORDER BY cantidad_ventas DESC;
+''')
+Pregunta 7: ¿Qué cliente no registra ventas? ¿Cómo lo identifican en la salida?
+Respuesta:
+Actividad 6: Modelo normalizado
+Observen cómo se obtiene el nombre de la categoría desde otra tabla.
+# Código 6: observar cómo se reconstruye la categoría del producto
+query_sql('''
+SELECT
+p.nombre AS producto,
+cat.nombre AS categoria,
+p.precio
+FROM productos p
+INNER JOIN categorias cat ON p.id_categoria = cat.id_categoria
+ORDER BY categoria, producto;
+''')
+Pregunta 8: ¿Por qué productos guarda id_categoria en lugar de repetir el nombre de la categoría?
+Respuesta:
+Pregunta 9: ¿Qué ventaja tiene este diseño para evitar datos repetidos?
+Respuesta:
+CONCLUSIONES
+Pregunta 10: Escriban una conclusión grupal sobre cómo JOIN y GROUP BY ayudan a interpretar ventas en una base normalizada.
+Respuesta:
+MATERIAL COMPLEMENTARIO
+- Material de Semana 3: JOIN y agrupaciones.
+- Material de Semana 4: normalización, claves primarias y claves foráneas.
+CRITERIOS DE EVALUACIÓN
+Criterios a evaluar
+Excelente
+Bueno
+Requiere mejora
+No aceptable
+Puntaje logrado
+Modelo de datos
+Reconoce tablas, claves primarias y claves foráneas del caso.
+Reconoce la mayoría de elementos.
+Reconoce pocos elementos.
+No reconoce el modelo.
+Consultas SQL
+Interpreta SELECT, INNER JOIN, LEFT JOIN y GROUP BY correctamente.
+Interpreta la mayoría de consultas.
+Interpreta parcialmente.
+No interpreta consultas.
+Resultados
+Explica totales, clientes y categorías usando la salida.
+Explica resultados con poca precisión.
+Resultados incompletos.
+No explica resultados.
+Normalización
+Relaciona IDs y tablas separadas con reducción de redundancia.
+Relaciona parcialmente.
+Menciona sin sustento.
+No relaciona con normalización.
+Trabajo grupal
+Incluye grupo, sección, integrantes y respuestas claras.
+Incluye la mayoría de datos.
+Datos incompletos.
+No presenta información grupal.
+Acciones a cumplir
+Puntaje
+Puntualidad y dedicaci?n
+1
+Cumplimiento de tiempos establecidos
+1
+Conclusiones: ortograf?a y redacci?n
+1
+Puntaje total
+/20
+Comentarios respecto del desempe?o del alumno
+Nivel
+Descripci?n
+Excelente
+Demuestra completo entendimiento del problema y cumple todos los requerimientos.
+Bueno
+Demuestra entendimiento considerable y cumple la mayor?a de requerimientos.
+Requiere mejora
+Demuestra entendimiento parcial y cumple pocos requerimientos.
+No aceptable
+No demuestra entendimiento suficiente o no desarrolla la actividad.

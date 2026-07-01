@@ -11,4 +11,4 @@ Esta carpeta agrupa los materiales de laboratorio localizados para Mineria de Da
 - `banco_preguntas/`: banco de preguntas de Mineria de Datos.
 - `materiales_crisp_dm/`: presentaciones de apoyo para Machine Learning y CRISP-DM.
 
-Solo se subieron archivos finales/localizables. No se encontraron en disco laboratorios finales numerados para todas las semanas 1 a 16.
+Adicionalmente, la carpeta `../laboratorios/` contiene el paquete completo localizado en `Mineria_Datos_2026/laboratorios`.
